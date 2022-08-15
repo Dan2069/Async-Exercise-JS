@@ -1,20 +1,31 @@
 let url = 'http://numbersapi.com/';
 let number = 3;
 
-$.getJSON(`${url}${number}?json`).then(data => {
+
+async function part1() {
+    let data = await $.getJSON(`${url}${number}?json`);
     console.log(data);
-});
+}
+
+part1();
 
 
-let second_number = [25, 39, 50];
-$.getJSON(`${url}${second_number}?json`)
-.then(data => (console.log(data)))
 
-Promise.all(
-  Array.from({ length: 4 }, () => {
-  return $.getJSON(`${url}${number}?json`);
-    })
-).then(facts => {
-    facts.forEach(data => $("body").append(`<p>${data.text}</p>`));
+const second_number = [25, 39, 50];
+async function part2(){
+  let data = await $.getJSON(`${url}${second_number}?json`);
+  console.log(data);
+}
+
+part2();
+
+
+async function part3() {
+  let facts = await Promise.all(
+    Array.from({ length: 4 }, () => $.getJSON(`${url}${number}?json`))
+  );
+  facts.forEach(data => {
+    $('body').append(`<p>${data.text}</p>`);
   });
-  
+}
+part3();

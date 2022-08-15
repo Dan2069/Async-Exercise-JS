@@ -2,78 +2,81 @@ $(function() {
     let baseURL = "https://pokeapi.co/api/v2";
   
     // 1.
-    $.getJSON(`${baseURL}/pokemon/?limit=1000`, function(data) {
+    async function part1() {
+      let data = await $.getJSON(`${baseURL}/pokemon/?limit=1000`);
       console.log(data);
-    });
+    }
   
     // 2.
-    $.getJSON(`${baseURL}/pokemon/?limit=1000`, function(data) {
+    async function part2() {
+      let allData = await $.getJSON(`${baseURL}/pokemon/?limit=1000`);
       let randomPokemonUrls = [];
       for (let i = 0; i < 3; i++) {
-        let randomIdx = Math.floor(Math.random() * data.results.length);
-        let url = data.results.splice(randomIdx, 1)[0].url;
+        let randomIdx = Math.floor(Math.random() * allData.results.length);
+        let url = allData.results.splice(randomIdx, 1)[0].url;
         randomPokemonUrls.push(url);
       }
-      randomPokemonUrls.forEach(function(url) {
-        $.getJSON(url, function(data) {
-          console.log(data);
-        });
-      });
-    });
+      let pokemonData = await Promise.all(
+        randomPokemonUrls.map(url => $.getJSON(url))
+      );
+      pokemonData.forEach(p => console.log(p));
+    }
   
     // 3.
-    $.getJSON(`${baseURL}/pokemon/?limit=1000`, function(data) {
+    async function part3() {
+      let allData = await $.getJSON(`${baseURL}/pokemon/?limit=1000`);
       let randomPokemonUrls = [];
       for (let i = 0; i < 3; i++) {
-        let randomIdx = Math.floor(Math.random() * data.results.length);
-        let url = data.results.splice(randomIdx, 1)[0].url;
+        let randomIdx = Math.floor(Math.random() * allData.results.length);
+        let url = allData.results.splice(randomIdx, 1)[0].url;
         randomPokemonUrls.push(url);
       }
-      randomPokemonUrls.forEach(function(url) {
-        $.getJSON(url, function(data) {
-          let name = data.name;
-          $.getJSON(data.species.url, function(data) {
-            let descriptionObj = data.flavor_text_entries.find(
-              entry => entry.language.name === "en"
-            );
-            let description = descriptionObj
-              ? descriptionObj.flavor_text
-              : "No description available.";
-            console.log(`${name}: ${description}`);
-          });
-        });
+      let pokemonData = await Promise.all(
+        randomPokemonUrls.map(url => $.getJSON(url))
+      );
+      let speciesData = await Promise.all(
+        pokemonData.map(p => $.getJSON(p.species.url))
+      );
+      descriptions = speciesData.map(d => {
+        let descriptionObj = d.flavor_text_entries.find(
+          entry => entry.language.name === "en"
+        );
+        return descriptionObj
+          ? descriptionObj.flavor_text
+          : "No description available.";
       });
-    });
+      descriptions.forEach((desc, i) => {
+        console.log(`${pokemonData[i].name}: ${desc}`);
+      });
+    }
   
     // 4.
-  
     let $btn = $("button");
     let $pokeArea = $("#pokemon-area");
   
-    $btn.on("click", function() {
+    $btn.on("click", async function() {
       $pokeArea.empty();
-      $.getJSON(`${baseURL}/pokemon/?limit=1000`, function(data) {
-        let randomPokemonUrls = [];
-        for (let i = 0; i < 3; i++) {
-          let randomIdx = Math.floor(Math.random() * data.results.length);
-          let url = data.results.splice(randomIdx, 1)[0].url;
-          randomPokemonUrls.push(url);
-        }
-        randomPokemonUrls.forEach(function(url, i) {
-          $.getJSON(url, function(data) {
-            let name = data.name;
-            let imgSrc = data.sprites.front_default;
-            $.getJSON(data.species.url, function(data) {
-              let descriptionObj = data.flavor_text_entries.find(
-                entry => entry.language.name === "en"
-              );
-              let description = descriptionObj
-                ? descriptionObj.flavor_text
-                : "No description available.";
-              $pokeArea.append(makePokeCard(name, imgSrc, description));
-            });
-          });
+      let allData = await $.getJSON(`${baseURL}/pokemon/?limit=1000`);
+      let randomPokemonUrls = [];
+      for (let i = 0; i < 3; i++) {
+        let randomIdx = Math.floor(Math.random() * allData.results.length);
+        let url = allData.results.splice(randomIdx, 1)[0].url;
+        randomPokemonUrls.push(url);
+      }
+      let pokemonData = await Promise.all(
+        randomPokemonUrls.map(url => $.getJSON(url))
+      );
+      let speciesData = await Promise.all(
+        pokemonData.map(p => $.getJSON(p.species.url))
+      );
+      speciesData.forEach((d, i) => {
+        let descriptionObj = d.flavor_text_entries.find(function(entry) {
+          return entry.language.name === "en";
         });
+        let description = descriptionObj ? descriptionObj.flavor_text : "";
+        let name = pokemonData[i].name;
+        let imgSrc = pokemonData[i].sprites.front_default;
+        $pokeArea.append(makePokeCard(name, imgSrc, description));
       });
     });
   
@@ -87,4 +90,3 @@ $(function() {
       `;
     }
   });
-  
